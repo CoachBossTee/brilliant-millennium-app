@@ -3,7 +3,7 @@
 import { useEffect, useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSupabase } from '../supabase-provider';
-import { Plus, Pencil, Trash2, Check, X, FolderOpen, CheckSquare, TrendingUp } from 'lucide-react';
+import { Plus, Pencil, Trash2, Check, X, FolderOpen, CheckSquare, TrendingUp, Clock } from 'lucide-react';
 
 type Project = {
   id: number;
@@ -111,6 +111,20 @@ export default function DashboardPage() {
       setSuccessMsg('Project deleted!');
       setTimeout(() => setSuccessMsg(null), 3000);
     }
+  }
+
+  function formatDate(dateString?: string) {
+    if (!dateString) return 'Recently';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return 'Just now';
+    if (diffInHours < 24) return `${diffInHours}h ago`;
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays === 1) return 'Yesterday';
+    if (diffInDays < 7) return `${diffInDays} days ago`;
+    return date.toLocaleDateString();
   }
 
   if (loading) {
@@ -245,7 +259,7 @@ export default function DashboardPage() {
         </form>
       </div>
 
-      {/* Projects List */}
+      {/* Projects Grid */}
       <div>
         <h2 style={{ 
           fontSize: '1.25rem', 
@@ -261,41 +275,56 @@ export default function DashboardPage() {
             <p>Create your first project above to get started!</p>
           </div>
         ) : (
-          <ul>
+          <div className="projects-grid">
             {projects.map(project => (
-              <li key={project.id}>
+              <div key={project.id} className="project-card">
                 {editingId === project.id ? (
-                  <>
+                  <div className="project-card-edit">
                     <input
                       type="text"
                       value={editingName}
                       onChange={e => setEditingName(e.target.value)}
-                      style={{ flex: 1 }}
+                      autoFocus
                     />
-                    <button onClick={() => handleUpdate(project.id)} className="secondary">
-                      <Check size={16} />
-                    </button>
-                    <button onClick={() => { setEditingId(null); setEditingName(''); }} className="secondary">
-                      <X size={16} />
-                    </button>
-                  </>
+                    <div className="project-card-edit-actions">
+                      <button onClick={() => handleUpdate(project.id)} className="secondary">
+                        <Check size={16} />
+                        Save
+                      </button>
+                      <button onClick={() => { setEditingId(null); setEditingName(''); }} className="secondary">
+                        <X size={16} />
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
                 ) : (
                   <>
-                    <span style={{ flex: 1 }}>{project.name}</span>
-                    <button 
-                      onClick={() => { setEditingId(project.id); setEditingName(project.name); }}
-                      className="secondary"
-                    >
-                      <Pencil size={16} />
-                    </button>
-                    <button onClick={() => handleDelete(project.id)}>
-                      <Trash2 size={16} />
-                    </button>
+                    <div className="project-card-icon">
+                      <FolderOpen size={24} />
+                    </div>
+                    <div className="project-card-title">{project.name}</div>
+                    <div className="project-card-meta">
+                      <Clock size={14} />
+                      {formatDate(project.created_at)}
+                    </div>
+                    <div className="project-card-actions">
+                      <button 
+                        onClick={() => { setEditingId(project.id); setEditingName(project.name); }}
+                        className="secondary"
+                      >
+                        <Pencil size={14} />
+                        Edit
+                      </button>
+                      <button onClick={() => handleDelete(project.id)}>
+                        <Trash2 size={14} />
+                        Delete
+                      </button>
+                    </div>
                   </>
                 )}
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </div>
     </main>
