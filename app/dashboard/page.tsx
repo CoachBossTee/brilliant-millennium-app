@@ -3,12 +3,13 @@
 import { useEffect, useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSupabase } from '../supabase-provider';
-import { Plus, Pencil, Trash2, Check, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Check, X, FolderOpen, CheckSquare, TrendingUp } from 'lucide-react';
 
 type Project = {
   id: number;
   name: string;
   user_id: string;
+  created_at?: string;
 };
 
 export default function DashboardPage() {
@@ -16,6 +17,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [taskCount, setTaskCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -33,13 +35,22 @@ export default function DashboardPage() {
 
       setUserId(userData.user.id);
 
-      const { data, error } = await supabase.from('projects').select('*');
-      if (error) {
-        setErrorMsg(error.message);
+      const { data: projectsData, error: projectsError } = await supabase
+        .from('projects')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (projectsError) {
+        setErrorMsg(projectsError.message);
       } else {
-        setProjects(data ?? []);
+        setProjects(projectsData ?? []);
       }
 
+      const { count } = await supabase
+        .from('tasks')
+        .select('*', { count: 'exact', head: true });
+
+      setTaskCount(count || 0);
       setLoading(false);
     }
 
@@ -60,7 +71,7 @@ export default function DashboardPage() {
     if (error) {
       setErrorMsg(error.message);
     } else if (data && data.length > 0) {
-      setProjects(prev => [...prev, data as Project]);
+      setProjects(prev => [data[0] as Project, ...prev]);
       setSuccessMsg('Project added!');
       setTimeout(() => setSuccessMsg(null), 3000);
       setNewName('');
@@ -80,7 +91,7 @@ export default function DashboardPage() {
     if (error) {
       setErrorMsg(error.message);
     } else if (data && data.length > 0) {
-      setProjects(prev => prev.map(p => (p.id === id ? data as Project : p)));
+      setProjects(prev => prev.map(p => (p.id === id ? data[0] as Project : p)));
       setSuccessMsg('Project updated!');
       setTimeout(() => setSuccessMsg(null), 3000);
       setEditingId(null);
@@ -106,8 +117,8 @@ export default function DashboardPage() {
     return (
       <main>
         <div className="page-header">
-          <h1>Projects</h1>
-          <p className="page-description">Manage your projects</p>
+          <h1>Dashboard</h1>
+          <p className="page-description">Overview of your projects and tasks</p>
         </div>
         <div className="loading"></div>
       </main>
@@ -117,37 +128,139 @@ export default function DashboardPage() {
   return (
     <main>
       <div className="page-header">
-        <h1>Projects</h1>
-        <p className="page-description">Create and manage your projects</p>
+        <h1>Dashboard</h1>
+        <p className="page-description">Overview of your projects and tasks</p>
       </div>
 
       {errorMsg && <div className="error">{errorMsg}</div>}
       {successMsg && <div className="success">{successMsg}</div>}
 
-      <form onSubmit={handleAdd} style={{ marginBottom: '2rem', display: 'flex', gap: '0.5rem' }}>
-        <input
-          type="text"
-          placeholder="New project name"
-          value={newName}
-          onChange={e => setNewName(e.target.value)}
-          style={{ flex: 1, marginBottom: 0 }}
-        />
-        <button type="submit">
-          <Plus size={18} />
-          Add Project
-        </button>
-      </form>
-
-      {projects.length === 0 ? (
-        <div className="empty-state">
-          <h3>No projects yet</h3>
-          <p>Create your first project to get started!</p>
+      {/* Stats Cards */}
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+        gap: '1rem', 
+        marginBottom: '2rem' 
+      }}>
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(233, 30, 99, 0.1) 0%, rgba(156, 39, 176, 0.1) 100%)',
+          border: '1px solid rgba(233, 30, 99, 0.3)',
+          borderRadius: '12px',
+          padding: '1.5rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1rem'
+        }}>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            borderRadius: '12px',
+            background: 'linear-gradient(135deg, #e91e63, #9c27b0)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <FolderOpen size={24} />
+          </div>
+          <div>
+            <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>{projects.length}</div>
+            <div style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.875rem' }}>Projects</div>
+          </div>
         </div>
-      ) : (
-        <>
-          <p style={{ marginBottom: '1rem', color: 'rgba(255, 255, 255, 0.6)' }}>
-            {projects.length} {projects.length === 1 ? 'project' : 'projects'}
-          </p>
+
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(33, 150, 243, 0.1) 0%, rgba(0, 188, 212, 0.1) 100%)',
+          border: '1px solid rgba(33, 150, 243, 0.3)',
+          borderRadius: '12px',
+          padding: '1.5rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1rem'
+        }}>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            borderRadius: '12px',
+            background: 'linear-gradient(135deg, #2196f3, #00bcd4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <CheckSquare size={24} />
+          </div>
+          <div>
+            <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>{taskCount}</div>
+            <div style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.875rem' }}>Tasks</div>
+          </div>
+        </div>
+
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(156, 39, 176, 0.1) 0%, rgba(103, 58, 183, 0.1) 100%)',
+          border: '1px solid rgba(156, 39, 176, 0.3)',
+          borderRadius: '12px',
+          padding: '1.5rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1rem'
+        }}>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            borderRadius: '12px',
+            background: 'linear-gradient(135deg, #9c27b0, #673ab7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <TrendingUp size={24} />
+          </div>
+          <div>
+            <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>{projects.length + taskCount}</div>
+            <div style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.875rem' }}>Total Items</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Add Project Form */}
+      <div style={{ marginBottom: '2rem' }}>
+        <h2 style={{ 
+          fontSize: '1.25rem', 
+          marginBottom: '1rem',
+          color: 'rgba(255, 255, 255, 0.9)'
+        }}>
+          Create New Project
+        </h2>
+        <form onSubmit={handleAdd} style={{ display: 'flex', gap: '0.5rem' }}>
+          <input
+            type="text"
+            placeholder="Project name"
+            value={newName}
+            onChange={e => setNewName(e.target.value)}
+            style={{ flex: 1, marginBottom: 0 }}
+          />
+          <button type="submit">
+            <Plus size={18} />
+            Add Project
+          </button>
+        </form>
+      </div>
+
+      {/* Projects List */}
+      <div>
+        <h2 style={{ 
+          fontSize: '1.25rem', 
+          marginBottom: '1rem',
+          color: 'rgba(255, 255, 255, 0.9)'
+        }}>
+          Your Projects
+        </h2>
+
+        {projects.length === 0 ? (
+          <div className="empty-state">
+            <h3>No projects yet</h3>
+            <p>Create your first project above to get started!</p>
+          </div>
+        ) : (
           <ul>
             {projects.map(project => (
               <li key={project.id}>
@@ -183,8 +296,8 @@ export default function DashboardPage() {
               </li>
             ))}
           </ul>
-        </>
-      )}
+        )}
+      </div>
     </main>
   );
 }
