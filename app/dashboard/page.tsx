@@ -3,6 +3,7 @@
 import { useEffect, useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSupabase } from '../supabase-provider';
+import { Plus, Pencil, Trash2, Check, X } from 'lucide-react';
 
 type Project = {
   id: number;
@@ -59,7 +60,7 @@ export default function DashboardPage() {
     if (error) {
       setErrorMsg(error.message);
     } else if (data && data.length > 0) {
-      setProjects(prev => [...prev, data[0] as Project]);
+      setProjects(prev => [...prev, data as Project]);
       setSuccessMsg('Project added!');
       setTimeout(() => setSuccessMsg(null), 3000);
       setNewName('');
@@ -79,7 +80,7 @@ export default function DashboardPage() {
     if (error) {
       setErrorMsg(error.message);
     } else if (data && data.length > 0) {
-      setProjects(prev => prev.map(p => (p.id === id ? data[0] as Project : p)));
+      setProjects(prev => prev.map(p => (p.id === id ? data as Project : p)));
       setSuccessMsg('Project updated!');
       setTimeout(() => setSuccessMsg(null), 3000);
       setEditingId(null);
@@ -104,7 +105,10 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <main>
-        <h1>Dashboard</h1>
+        <div className="page-header">
+          <h1>Projects</h1>
+          <p className="page-description">Manage your projects</p>
+        </div>
         <div className="loading"></div>
       </main>
     );
@@ -112,28 +116,38 @@ export default function DashboardPage() {
 
   return (
     <main>
-      <h1>Dashboard</h1>
+      <div className="page-header">
+        <h1>Projects</h1>
+        <p className="page-description">Create and manage your projects</p>
+      </div>
 
       {errorMsg && <div className="error">{errorMsg}</div>}
       {successMsg && <div className="success">{successMsg}</div>}
 
-      <form onSubmit={handleAdd} style={{ marginBottom: '2rem' }}>
+      <form onSubmit={handleAdd} style={{ marginBottom: '2rem', display: 'flex', gap: '0.5rem' }}>
         <input
           type="text"
           placeholder="New project name"
           value={newName}
           onChange={e => setNewName(e.target.value)}
+          style={{ flex: 1, marginBottom: 0 }}
         />
-        <button type="submit" style={{ marginLeft: '0.5rem' }}>Add Project</button>
+        <button type="submit">
+          <Plus size={18} />
+          Add Project
+        </button>
       </form>
 
       {projects.length === 0 ? (
         <div className="empty-state">
-          <p>No projects yet. Create your first one above!</p>
+          <h3>No projects yet</h3>
+          <p>Create your first project to get started!</p>
         </div>
       ) : (
         <>
-          <p style={{ marginBottom: '1rem' }}>Projects: {projects.length}</p>
+          <p style={{ marginBottom: '1rem', color: 'rgba(255, 255, 255, 0.6)' }}>
+            {projects.length} {projects.length === 1 ? 'project' : 'projects'}
+          </p>
           <ul>
             {projects.map(project => (
               <li key={project.id}>
@@ -145,16 +159,25 @@ export default function DashboardPage() {
                       onChange={e => setEditingName(e.target.value)}
                       style={{ flex: 1 }}
                     />
-                    <button onClick={() => handleUpdate(project.id)}>Save</button>
-                    <button onClick={() => { setEditingId(null); setEditingName(''); }}>Cancel</button>
+                    <button onClick={() => handleUpdate(project.id)} className="secondary">
+                      <Check size={16} />
+                    </button>
+                    <button onClick={() => { setEditingId(null); setEditingName(''); }} className="secondary">
+                      <X size={16} />
+                    </button>
                   </>
                 ) : (
                   <>
                     <span style={{ flex: 1 }}>{project.name}</span>
-                    <button onClick={() => { setEditingId(project.id); setEditingName(project.name); }}>
-                      Edit
+                    <button 
+                      onClick={() => { setEditingId(project.id); setEditingName(project.name); }}
+                      className="secondary"
+                    >
+                      <Pencil size={16} />
                     </button>
-                    <button onClick={() => handleDelete(project.id)}>Delete</button>
+                    <button onClick={() => handleDelete(project.id)}>
+                      <Trash2 size={16} />
+                    </button>
                   </>
                 )}
               </li>

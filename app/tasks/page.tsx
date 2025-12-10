@@ -3,6 +3,7 @@
 import { useEffect, useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSupabase } from '../supabase-provider';
+import { Plus, Pencil, Trash2, Check, X } from 'lucide-react';
 
 type Task = {
   id: number;
@@ -104,7 +105,10 @@ export default function TasksPage() {
   if (loading) {
     return (
       <main>
-        <h1>Tasks</h1>
+        <div className="page-header">
+          <h1>Tasks</h1>
+          <p className="page-description">Manage your tasks</p>
+        </div>
         <div className="loading"></div>
       </main>
     );
@@ -112,28 +116,38 @@ export default function TasksPage() {
 
   return (
     <main>
-      <h1>Tasks</h1>
+      <div className="page-header">
+        <h1>Tasks</h1>
+        <p className="page-description">Track and organize your tasks</p>
+      </div>
 
       {errorMsg && <div className="error">{errorMsg}</div>}
       {successMsg && <div className="success">{successMsg}</div>}
 
-      <form onSubmit={handleAdd} style={{ marginBottom: '2rem' }}>
+      <form onSubmit={handleAdd} style={{ marginBottom: '2rem', display: 'flex', gap: '0.5rem' }}>
         <input
           type="text"
           placeholder="New task title"
           value={newTitle}
           onChange={e => setNewTitle(e.target.value)}
+          style={{ flex: 1, marginBottom: 0 }}
         />
-        <button type="submit" style={{ marginLeft: '0.5rem' }}>Add Task</button>
+        <button type="submit">
+          <Plus size={18} />
+          Add Task
+        </button>
       </form>
 
       {tasks.length === 0 ? (
         <div className="empty-state">
-          <p>No tasks yet. Create your first one above!</p>
+          <h3>No tasks yet</h3>
+          <p>Add your first task to get started!</p>
         </div>
       ) : (
         <>
-          <p style={{ marginBottom: '1rem' }}>Tasks: {tasks.length}</p>
+          <p style={{ marginBottom: '1rem', color: 'rgba(255, 255, 255, 0.6)' }}>
+            {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}
+          </p>
           <ul>
             {tasks.map(task => (
               <li key={task.id}>
@@ -145,16 +159,25 @@ export default function TasksPage() {
                       onChange={e => setEditingTitle(e.target.value)}
                       style={{ flex: 1 }}
                     />
-                    <button onClick={() => handleUpdate(task.id)}>Save</button>
-                    <button onClick={() => { setEditingId(null); setEditingTitle(''); }}>Cancel</button>
+                    <button onClick={() => handleUpdate(task.id)} className="secondary">
+                      <Check size={16} />
+                    </button>
+                    <button onClick={() => { setEditingId(null); setEditingTitle(''); }} className="secondary">
+                      <X size={16} />
+                    </button>
                   </>
                 ) : (
                   <>
                     <span style={{ flex: 1 }}>{task.title}</span>
-                    <button onClick={() => { setEditingId(task.id); setEditingTitle(task.title); }}>
-                      Edit
+                    <button 
+                      onClick={() => { setEditingId(task.id); setEditingTitle(task.title); }}
+                      className="secondary"
+                    >
+                      <Pencil size={16} />
                     </button>
-                    <button onClick={() => handleDelete(task.id)}>Delete</button>
+                    <button onClick={() => handleDelete(task.id)}>
+                      <Trash2 size={16} />
+                    </button>
                   </>
                 )}
               </li>
