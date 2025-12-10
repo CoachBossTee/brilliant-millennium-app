@@ -1,35 +1,28 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useSupabase } from './supabase-provider';
 
 export default function HomePage() {
   const supabase = useSupabase();
-  const router = useRouter();
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function checkUser() {
       const { data } = await supabase.auth.getUser();
-      if (data.user) {
-        setUserEmail(data.user.email || null);
-      }
+      setUserEmail(data.user?.email || null);
       setLoading(false);
     }
     checkUser();
   }, [supabase]);
 
-  async function handleSignOut() {
-    await supabase.auth.signOut();
-    router.push('/login');
-  }
-
   if (loading) {
     return (
       <main>
-        <h1>Welcome</h1>
+        <div className="page-header">
+          <h1>Welcome</h1>
+        </div>
         <p>Loading...</p>
       </main>
     );
@@ -37,20 +30,25 @@ export default function HomePage() {
 
   return (
     <main>
-      <h1>Brilliant Millennium</h1>
-      <p style={{ fontSize: '1.2rem', marginBottom: '2rem' }}>
-        Infinite Possibilities. One Vision.
-      </p>
+      <div className="page-header">
+        <h1>Brilliant Millennium</h1>
+        <p className="page-description">
+          Infinite Possibilities. One Vision.
+        </p>
+      </div>
       
       {userEmail ? (
-        <>
-          <p>Signed in as: <strong>{userEmail}</strong></p>
-          <button onClick={handleSignOut} style={{ marginTop: '1rem' }}>
-            Sign Out
-          </button>
-        </>
+        <div>
+          <p style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>
+            Welcome back! Use the sidebar to navigate to your projects and tasks.
+          </p>
+        </div>
       ) : (
-        <p>Please sign in to access your projects and tasks.</p>
+        <div>
+          <p style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>
+            Sign in to access your projects and tasks.
+          </p>
+        </div>
       )}
     </main>
   );

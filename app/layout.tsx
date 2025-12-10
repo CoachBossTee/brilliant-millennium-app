@@ -1,7 +1,6 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import Link from 'next/link';
-import { SupabaseProvider } from './supabase-provider';
+import { LayoutGroup } from './layout-client';
 
 export const metadata: Metadata = {
   title: 'Brilliant Millennium',
@@ -16,16 +15,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <SupabaseProvider>
-          <nav>
-            <Link href="/">Home</Link>
-            <Link href="/dashboard">Projects</Link>
-            <Link href="/tasks">Tasks</Link>
-            <Link href="/profile">Profile</Link>
-            <Link href="/login">Login</Link>
-          </nav>
-          {children}
-        </SupabaseProvider>
+        <LayoutGroup>{children}</LayoutGroup>
       </body>
     </html>
   );
